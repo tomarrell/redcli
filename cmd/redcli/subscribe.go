@@ -1,6 +1,11 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/gomodule/redigo/redis"
+	"github.com/spf13/cobra"
+)
 
 const subscribeCommand = "SUBSCRIBE"
 
@@ -22,18 +27,19 @@ func newSubscribeCmd() *cobra.Command {
 func runSubscribe(cmd *cobra.Command, args []string) {
 	cmd.Println("Subscribing to topic:", args[0])
 
-	client, err := newClient(cmd.Context())
+	conn := newClient(cmd.Context())
 
-	// Make sure that our client doesn't timeout on reads
-	conn := client.WithTimeout(-1).Conn(cmd.Context())
+	err := conn.Send("SUBSCRIBE", args[0])
 	cobra.CheckErr(err)
+	cobra.CheckErr(conn.Flush())
 
-	conn.Process(cmd.Context()).Error()
-
-	for i := 0; i < subscribeCount; i++ {
-		res, err := conn.Do(cmd.Context(), subscribeCommand, args[0]).Result()
+	for {
+		res, err := redis.String(conn.Receive())
 		cobra.CheckErr(err)
+		fmt.Println(res)
 
-		cmd.Println(res)
+		res, err = redis.String(conn.Do("ACK"))
+		cobra.CheckErr(err)
+		fmt.Println(res)
 	}
 }

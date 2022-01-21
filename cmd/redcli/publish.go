@@ -14,10 +14,9 @@ func newPublishCmd() *cobra.Command {
 }
 
 func runPublish(cmd *cobra.Command, args []string) {
-	client, err := newClient(cmd.Context())
-	cobra.CheckErr(err)
+	conn := newClient(cmd.Context())
 
-	res, err := client.Do(cmd.Context(), "publish", args[0], args[1]).Result()
+	res, err := conn.Do("publish", args[0], args[1])
 	cobra.CheckErr(err)
 
 	cmd.Println(res)

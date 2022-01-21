@@ -2,21 +2,17 @@ package main
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/gomodule/redigo/redis"
+	"github.com/spf13/cobra"
 )
 
-func newClient(ctx context.Context) (*redis.Client, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-	})
+func newClient(ctx context.Context) redis.Conn {
+	conn, err := redis.DialURL("redis://localhost:6379")
+	cobra.CheckErr(err)
 
-	status := client.Ping(ctx)
-	if err := status.Err(); err != nil {
-		return nil, fmt.Errorf("pinging server: %v", err)
-	}
+	_, err = conn.Do("ping")
+	cobra.CheckErr(err)
 
-	return client, nil
+	return conn
 }
