@@ -29,11 +29,14 @@ func runSubscribe(cmd *cobra.Command, args []string) {
 
 	conn := newClient(cmd.Context())
 
-	err := conn.Send("SUBSCRIBE", args[0])
+	count, err := cmd.Flags().GetInt("count")
+	cobra.CheckErr(err)
+
+	err = conn.Send("SUBSCRIBE", args[0])
 	cobra.CheckErr(err)
 	cobra.CheckErr(conn.Flush())
 
-	for {
+	for i := 0; i < count; i++ {
 		res, err := redis.String(conn.Receive())
 		cobra.CheckErr(err)
 		fmt.Println(res)
